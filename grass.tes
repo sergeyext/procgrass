@@ -1,0 +1,111 @@
+#ifdef VERSION_410_NOT_DEFINED
+#version 410
+#endif
+
+layout(isolines, equal_spacing) in;
+
+out vec3 normal;
+out vec3 binormal;
+out float stemThickness;
+out float along;
+flat out float stemIdx;
+
+uniform float windEnabled = 1.0f;
+uniform float shiveringEnabled = 1.0f;
+uniform float windTurbulence = 0.2;
+uniform float windSpeed = 3000.0f;
+uniform vec3 windDirection = vec3(1.0f, 0.0f, 0.0f);
+
+// Classic 2d Perlin noise from [a, b] range
+float cnoise2dab(const in vec2 x, const in float a, const in float b) {
+    return fma((cnoise2d(x) + 1.0f) * 0.5f, b-a, a);
+}
+
+// Thickness depending on along coordinate.
+float thickness(const in float x) {
+    return (1.0f - x) / 0.9f;
+}
+
+// Flexibility depending on along coordinate.
+float flexibility(const in float x) {
+    return x * x;
+}
+
+void main(void)
+{
+    // Coordinate along the stem for point position computtations.
+    stemThickness = thickness(gl_TessCoord.x);
+    // Coordinate along the stem goes to subsequent stages.
+    along = gl_TessCoord.x;
+    stemIdx = gl_TessCoord.y;
+
+    float primitiveIdx = gl_PrimitiveID / float(numPrimitives);
+
+    float t = gl_TessCoord.x;// Curve parameter.
+    const float shiverRotFreq = 1526.0f;
+    const float shiverDriftFreq = shiverRotFreq / (2.0f * M_PI);
+    float shiverPhase = texture(urandom01, gl_TessCoord.y).r * 2.0f * M_PI;
+    const float shiverRadius = 0.1f;
+    // Curve node points.
+    float pIdxSfn = fma(sfn, shiveringEnabled, primitiveIdx) * shiverDriftFreq;
+    float seSfn = sfn * shiveringEnabled;
+    float randY = rand(gl_TessCoord.y);
+    vec2 v1 = vec2(
+    cnoise2dab(vec2((randY + 27.0f + seSfn) * shiverDriftFreq, pIdxSfn), 0.0f, 0.5f),
+    cnoise2dab(vec2((randY + 31.0f + seSfn) * shiverDriftFreq, pIdxSfn), 0.5f, 1.0f));
+    vec2 v2 = vec2(
+    cnoise2dab(vec2((randY + 99.0f + seSfn) * shiverDriftFreq, pIdxSfn), 0.5f, 1.0f),
+    cnoise2dab(vec2((randY + 51.0f + seSfn) * shiverDriftFreq, pIdxSfn), 0.0f, 0.6f));
+    vec2 v3 = vec2(
+    cnoise2dab(vec2((randY + 46.0f + seSfn) * shiverDriftFreq, pIdxSfn), 0.75f, 1.3f),
+    cnoise2dab(vec2((randY + 76.0f + seSfn) * shiverDriftFreq, pIdxSfn), 0.75f, 1.3f));
+    vec2 p0 = vec2(0.0f, 0.0f);
+    vec2 p1 = mix(v1, rotate(shiverRotFreq, shiverPhase, shiverRadius, v1), shiveringEnabled);
+    vec2 p2 = mix(v2, rotate(shiverRotFreq, shiverPhase, shiverRadius, v2), shiveringEnabled);
+    vec2 p3 = mix(v3, rotate(shiverRotFreq, shiverPhase, shiverRadius, v3), shiveringEnabled);
+
+    const float stemOffset = 0.3f;
+    const float stemRandAmplitude = 1.0f;
+    float t1 = t - 1.0f;
+    vec3 position;
+    // Deform isoline as cubic bezier curve.
+    position.xy = -p0 * (t1 * t1 * t1) + p3 * (t * t * t) + p1 * t * (t1 * t1) * 3.0f -
+        p2 * (t * t) * t1 * 3.0f;
+    // Offset by noisy circle radius.
+    position.x +=
+        fma(texture(urandom01, gl_TessCoord.y + primitiveIdx).r, stemRandAmplitude, stemOffset);
+    position.z = 0.0f;
+
+    // Rotating generatrix to achieve circular distribution.
+    float alpha = gl_TessCoord.y * 2.0f * M_PI;
+    float cosAlpha = cos(alpha);
+    float sinAlpha = sin(alpha);
+    mat3 circDistribution = mat3(
+        cosAlpha, 0.0f, -sinAlpha,
+        0.0f,     1.0f,      0.0f,
+        sinAlpha, 0.0f, cosAlpha);
+    position = circDistribution * position;
+
+    // Normal to generatrix, rotated according to position.
+    normal = normalize(circDistribution * vec3(
+        p0.y * (t1 * t1) * -3.0f + p1.y * (t1 * t1) * 3.0f - p2.y * (t * t) * 3.0f +
+            p3.y * (t * t) * 3.0f - p2.y * t * t1 * 6.0f + p1.y * t * t1 * 6.0f,
+        p0.x * (t1 * t1) *  3.0f - p1.x * (t1 * t1) * 3.0f + p2.x * (t * t) * 3.0f -
+            p3.x * (t * t) * 3.0f + p2.x * t * t1 * 6.0f - p1.x * t * t1 * 6.0f,
+        0.0f
+    ));
+    binormal = (circDistribution * vec3(0.0f, 0.0f, 1.0f));
+
+    // Translating to world frame
+    position += gl_in[0].gl_Position.xyz;
+
+    // Computing wind.
+    // Warning! This introduces inaccuracy: we nonlinearly deform the curve, leaving normals
+    // untouched. "Stronger" wind (when norm(windDirection) > 1.0f) may cause geometric artifacts.
+    vec3 windState = position;
+    windState.x += sfn * windSpeed;
+    vec3 windDisplacement = windDirection *
+        flexibility(t) * (cnoise3d(windState * windTurbulence) + 1.0f) * 0.5f;
+
+    gl_Position = vec4(position + windDisplacement * windEnabled, 1.0f);
+}
