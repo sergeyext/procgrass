@@ -13,12 +13,12 @@ ProceduralGrass::ProceduralGrass() {
     glBindBuffer(GL_ARRAY_BUFFER, posVbo);
 
     const int numNodes = 14;
-    numClusters = numNodes * numNodes;
     const GLfloat gridStep = 3.0f;
     const GLfloat xDispAmp = 5.0f;
     const GLfloat zDispAmp = 5.0f;
     const GLfloat yDispAmp = 0.3f;
-    GLfloat vertices[numClusters * 4];
+    numClusters = numNodes * numNodes;
+    GLfloat *vertices = new GLfloat[numClusters * 4];
     std::random_device rd;
     std::mt19937 mt(rd());
     std::uniform_real_distribution<GLfloat> xDisp(-xDispAmp, xDispAmp);
@@ -36,6 +36,8 @@ ProceduralGrass::ProceduralGrass() {
     }
     glVertexAttribPointer(ATTRIBINDEX_VERTEX, 4, GL_FLOAT, GL_FALSE, 0, 0);
     glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * numClusters * 4, vertices, GL_STATIC_DRAW);
+    glFinish();
+    delete[] vertices;
 
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
