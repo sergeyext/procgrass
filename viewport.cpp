@@ -65,20 +65,7 @@ void Viewport::setWindDirection(GLfloat x, GLfloat y, GLfloat z) {
 void Viewport::initializeGL() {
     initializeOpenGLFunctions();
     glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
-
-    // Shader and "model".
-    glEnable(GL_DEPTH_TEST);
-    glEnable(GL_CULL_FACE);
-    glCullFace(GL_BACK);
-    grassShader.init({
-        "shared.glsl",
-        "classicnoise2D.glsl",
-        "classicnoise3D.glsl",
-        "worley.glsl"
-    }, "grass");
-    grassShader.bind();
     pg = new ProceduralGrass;
-    grassShader.setUniformValue("numPrimitives", pg->getNumClusters());
 
     // Generate uniform random data from [0, 1].
     const GLuint randTexSize = 256;
@@ -87,7 +74,6 @@ void Viewport::initializeGL() {
     std::mt19937 gen(rd());
     std::uniform_real_distribution<float> dis(0.0f, 1.0f);
     std::generate(randTexData, randTexData + randTexSize, [&](){return dis(gen);});
-
     // Create and tune random texture.
     glGenTextures(1, &randTexture);
     glActiveTexture(GL_TEXTURE0);
@@ -99,11 +85,28 @@ void Viewport::initializeGL() {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
     glTexImage1D(GL_TEXTURE_1D, 0, GL_R16F, randTexSize, 0, GL_RED, GL_FLOAT, randTexData);
     glUniform1i(glGetUniformLocation(grassShader.programId(), "urandom01"), 0);
-
+    // Queries.
     glGenQueries(1, &primQuery);
     glGenQueries(1, &timeQuery);
 
+    // Shader.
+    glEnable(GL_DEPTH_TEST);
+    glEnable(GL_CULL_FACE);
+    glCullFace(GL_BACK);
+    if(grassShader.init({
+        "shared.glsl",
+        "classicnoise2D.glsl",
+        "classicnoise3D.glsl",
+        "worley.glsl"
+    }, "grass") != 0) {
+        QMessageBox::critical(0, "Error.", "Could not initialize shader.");
+        return;
+    }
+    grassShader.bind();
+    grassShader.setUniformValue("numPrimitives", pg->getNumClusters());
+
     // Go.
+    enableDraw = true;
     startTimer(10);
 }
 
@@ -198,6 +201,9 @@ void Viewport::timerEvent(QTimerEvent* ev) {
 }
 
 void Viewport::paintGL() {
+    if(!enableDraw) {
+        return;
+    }
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     grassShader.setUniformValue("viewProjectionMatrix", camera.getMatrix());
     grassShader.setUniformValue("eyePosition", camera.getPosition());

@@ -81,6 +81,8 @@ private:
     GLuint timeQuery;
 
     GLint frameNumber = 0;
+
+    bool enableDraw = false;
 };
 
 #endif // VIEWPORT_H
