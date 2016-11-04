@@ -1,10 +1,13 @@
 function bezier4()
+%bezier4 Cubic Bezier curve plotter.
+% Usage: click the window four times. Point coordinates will be printed to
+% command window, cubic Bezier spline will be plotted.
     figure;
     hold on;
     axis([-10 10 -10 10]);
     [x,y] = ginput(4);
+    disp([x,y]);
     scatter(x,y, 'b');
-    
     p0x = x(1);p1x = x(2);p2x = x(3);p3x = x(4);
     p0y = y(1);p1y = y(2);p2y = y(3);p3y = y(4);
     

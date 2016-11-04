@@ -24,6 +24,10 @@ int lod() {
     return 4;
 }
 
+/*
+TODO: replace half-space culling with frustum culling?
+*/
+
 void main () {
     gl_out[gl_InvocationID].gl_Position = gl_in[gl_InvocationID].gl_Position;
     gl_TessLevelOuter[0] = gl_in[gl_InvocationID].gl_Position.w;

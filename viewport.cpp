@@ -88,7 +88,6 @@ void Viewport::initializeGL() {
     // Queries.
     glGenQueries(1, &primQuery);
     glGenQueries(1, &timeQuery);
-
     // Shader.
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
@@ -192,6 +191,13 @@ void Viewport::measure() {
 }
 
 void Viewport::timerEvent(QTimerEvent* ev) {
+    /**
+     * @todo Write a correct main loop?
+     * Tips:
+     * http://gameprogrammingpatterns.com/game-loop.html
+     * http://gamedev.stackexchange.com/questions/651/tips-for-writing-the-main-game-loop
+     * http://gafferongames.com/game-physics/fix-your-timestep/
+     */
     ev->accept();
     static const GLint totalFrames = 65536;
     frameNumber = (frameNumber + 1) % totalFrames;

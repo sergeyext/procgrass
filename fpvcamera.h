@@ -4,11 +4,18 @@
 #include <QMatrix4x4>
 #include <QVector3D>
 
+/**
+ * @brief First person view camera class.
+ *
+ * Camera class encapsulates camera position, orientation, side axes (needed for movement)
+ * and projection.
+ */
 class FpvCamera
 {
 public:
     FpvCamera() {}
 
+    //! @brief Returns scene transformation matrix, including projection.
     inline QMatrix4x4 getMatrix() const {
         return projectionMatrix * orientPosMatrix;
     }

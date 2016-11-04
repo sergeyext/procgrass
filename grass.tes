@@ -102,6 +102,9 @@ void main(void)
     // Computing wind.
     // Warning! This introduces inaccuracy: we nonlinearly deform the curve, leaving normals
     // untouched. "Stronger" wind (when norm(windDirection) > 1.0f) may cause geometric artifacts.
+    // TODO: add a compute shader with Navier-Stokes-based wind computation.
+    // Appropriate algo description:
+    // http://www.dgp.toronto.edu/people/stam/reality/Research/pdf/GDC03.pdf
     vec3 windState = position;
     windState.x += sfn * windSpeed;
     vec3 windDisplacement = windDirection *

@@ -5,6 +5,7 @@ MainWindow::MainWindow(QWidget *parent) :
 QWidget(parent),
 ui(new Ui::MainWindow) {
     ui->setupUi(this);
+    // Control.
     connect(ui->controls, SIGNAL(windToggled(bool)), ui->viewport, SLOT(setWindEnabled(bool)));
     connect(ui->controls, SIGNAL(shiveringToggled(bool)), ui->viewport,
         SLOT(setShiveringEnabled(bool)));
