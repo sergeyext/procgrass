@@ -34,3 +34,7 @@ Note that some distributions still provide Qt4 as main Qt version, so qmake bina
 `qmake-qt5` or any other distribution-dependent name.
 
 All grass.* and *.glsl files from source directory must be placed into binary directory.
+
+Links
+---
+Cellular and Classic noise functions are (C) [Stefan Gustavson](https://github.com/stegu/webgl-noise)
