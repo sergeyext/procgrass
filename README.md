@@ -39,4 +39,4 @@ Links
 ---
 Cellular and Classic noise functions are (C) [Stefan Gustavson](https://github.com/stegu/webgl-noise)
 
-Step-by-step pipeline and math description in Rusiian: https://habrahabr.ru/post/314532/
+Step-by-step pipeline and math description in Russian: https://habrahabr.ru/post/314532/
